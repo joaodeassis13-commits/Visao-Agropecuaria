@@ -1,46 +1,47 @@
 import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const agora = new Date();
+const pad = (n) => String(n).padStart(2, '0');
+const versao = `${agora.getFullYear()}-${pad(agora.getMonth() + 1)}-${pad(agora.getDate())} ${pad(agora.getHours())}:${pad(agora.getMinutes())}`;
+
 export default defineConfig({
+  define: { __VERSAO__: JSON.stringify(versao) },
   plugins: [
+    react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-512-maskable.png', 'logo-visao.png'],
+      includeAssets: ['icon.svg'],
       manifest: {
-        name: 'Farm Stock',
-        short_name: 'Farm Stock',
-        description: 'Controle de estoque de medicamentos e insumos da fazenda',
-        theme_color: '#1f4b3a',
-        background_color: '#eef1ea',
+        name: 'VA — Gestão Agropecuária',
+        short_name: 'VA',
+        description: 'Pecuária, agricultura, estoque e financeiro',
+        theme_color: '#1b5e37',
+        background_color: '#1b5e37',
         display: 'standalone',
-        orientation: 'portrait',
+        lang: 'pt-BR',
         start_url: '/',
-        scope: '/',
-        icons: [
-          { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'icons/icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
-        ]
+        icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
       },
       workbox: {
-        // App shell (HTML/CSS/JS) sempre disponível offline.
-        globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
-        // Dados do Supabase: tenta a rede primeiro; se falhar (offline),
-        // usa a última resposta guardada. Os dados "de verdade" para uso
-        // offline continuam vindo do IndexedDB local (ver src/db/local.js) —
-        // isto aqui é só uma rede de segurança extra para leituras.
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        navigateFallback: '/index.html',
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => url.hostname.endsWith('supabase.co'),
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-api-cache',
-              networkTimeoutSeconds: 4,
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 7 }
-            }
-          }
-        ]
-      }
-    })
-  ]
+            // imagens de satélite já vistas ficam disponíveis offline
+            urlPattern: /^https:\/\/server\.arcgisonline\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: { cacheName: 'mapa-tiles', expiration: { maxEntries: 4000, maxAgeSeconds: 60 * 60 * 24 * 60 } },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: { cacheName: 'fontes', expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 } },
+          },
+        ],
+      },
+    }),
+  ],
 });
