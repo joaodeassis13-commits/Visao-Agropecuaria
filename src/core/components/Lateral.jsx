@@ -77,7 +77,7 @@ export default function Lateral({ aberta, onFechar, itens }) {
         </div>
 
         <div className="caixa-sync">
-          <div className="sync-status">
+          <div className={`sync-status ${online ? '' : 'offline'}`}>
             {online ? <Wifi size={16} /> : <WifiOff size={16} />}
             {online ? 'Conectado' : 'Sem internet — trabalhando offline'}
           </div>
